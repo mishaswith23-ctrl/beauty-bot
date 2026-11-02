@@ -694,13 +694,62 @@ const SCREENS = {
           )),
         ),
       ),
+      !state.boot.is_master && h('.rise', { i: 3, style: 'margin-top:10px' },
+        h('button.btn.link', { style: 'margin:0 auto;display:flex', onclick: () => push('login') }, icon('lock', 18), 'Вход для мастера')),
+    ];
+  },
+
+  // Вход в кабинет по логину и паролю
+  async login() {
+    const login = h('input', { type: 'text', autocomplete: 'username', autocapitalize: 'off', spellcheck: false, maxLength: 32 });
+    const password = h('input', {
+      type: 'password', autocomplete: 'current-password', maxLength: 72,
+      onkeydown: event => { if (event.key === 'Enter') submit.click(); },
+    });
+    const submit = h('button.btn', {
+      onclick: async () => {
+        if (!login.value.trim() || !password.value) return toast('Введите логин и пароль', 'error');
+        submit.disabled = true;
+        try {
+          await api('master/login', { method: 'POST', body: { login: login.value, password: password.value } });
+        } catch (error) {
+          submit.disabled = false;
+          password.value = '';
+          haptic('error');
+          return toast(error.message, 'error');
+        }
+        haptic('success');
+        await refreshBoot(0).catch(() => {});
+        toast('Вы вошли в кабинет');
+        resetTo('schedule');
+      },
+    }, 'Войти');
+    return [
+      topbar('Вход для мастера'),
+      h('p.muted.rise', { i: 1, style: 'margin-bottom:16px' },
+        'Кабинет откроется на этом аккаунте Telegram, сюда же будут приходить новые записи.'),
+      h('.card.rise', { i: 2 },
+        h('label.field', h('span', 'Логин'), login),
+        h('label.field', h('span', 'Пароль'), password),
+      ),
+      h('.cta', h('.inner', submit)),
     ];
   },
 
   // Кабинет мастера
 
   async schedule() {
-    const data = await api(`master/overview${state.masterDate ? `?date=${state.masterDate}` : ''}`);
+    let data;
+    try {
+      data = await api(`master/overview${state.masterDate ? `?date=${state.masterDate}` : ''}`);
+    } catch (error) {
+      if (error.status !== 403) throw error;
+      // Кабинет открыли на другом аккаунте: убираем вкладку и уходим на главную
+      await refreshBoot(0).catch(() => {});
+      toast('Кабинет открыт на другом аккаунте', 'error');
+      resetTo('home');
+      return [];
+    }
     state.masterDate = data.day.date;
     const dayBox = h('.stack', renderDay(data.day));
 
@@ -737,6 +786,8 @@ const SCREENS = {
       h('.rise', { i: 2 }, dayBox),
       h('.rise', { i: 3, style: 'margin-top:14px' },
         h('button.btn.ghost', { onclick: () => blockSheet(state.masterDate) }, icon('lock', 20), 'Закрыть время')),
+      h('.rise', { i: 4, style: 'margin-top:10px' },
+        h('button.btn.link', { style: 'margin:0 auto;display:flex', onclick: accessSheet }, icon('user', 18), 'Вход и пароль')),
     ];
   },
 };
@@ -830,6 +881,76 @@ function blockSheet(date) {
   });
 }
 
+// Логин и пароль, с которыми кабинет открывается на любом аккаунте Telegram
+async function accessSheet() {
+  let access;
+  try {
+    access = await api('master/access');
+  } catch (error) {
+    return toast(error.message, 'error');
+  }
+  const hasPassword = !!access.login;
+  const login = h('input', {
+    type: 'text', autocomplete: 'username', autocapitalize: 'off', spellcheck: false, maxLength: 32, value: access.login || '',
+  });
+  const current = h('input', { type: 'password', autocomplete: 'current-password', maxLength: 72 });
+  const password = h('input', { type: 'password', autocomplete: 'new-password', maxLength: 72 });
+  openSheet(close => {
+    const save = h('button.btn', {
+      onclick: async () => {
+        if (password.value.length < 8) return toast('Пароль — от 8 символов', 'error');
+        save.disabled = true;
+        try {
+          await api('master/credentials', {
+            method: 'POST',
+            body: { login: login.value, password: password.value, current_password: current.value },
+          });
+        } catch (error) {
+          save.disabled = false;
+          haptic('error');
+          return toast(error.message, 'error');
+        }
+        close();
+        haptic('success');
+        toast(hasPassword ? 'Пароль изменён' : 'Логин и пароль сохранены');
+      },
+    }, hasPassword ? 'Сменить пароль' : 'Сохранить');
+    const logout = hasPassword && h('button.btn.link.bad', {
+      style: 'margin:0 auto;display:flex',
+      onclick: async () => {
+        close();
+        const yes = await confirmSheet({
+          title: 'Выйти из кабинета?',
+          text: 'Кабинет и уведомления о записях пропадут с этого аккаунта. Вернуться можно по логину и паролю: команда /login в боте.',
+          confirm: 'Выйти',
+          danger: true,
+        });
+        if (!yes) return;
+        try {
+          await api('master/logout', { method: 'POST' });
+        } catch (error) {
+          return toast(error.message, 'error');
+        }
+        await refreshBoot(0).catch(() => {});
+        toast('Вы вышли из кабинета');
+        resetTo('home');
+      },
+    }, 'Выйти из кабинета');
+    return [
+      h('h2', 'Вход в кабинет'),
+      h('p', hasPassword
+        ? 'С этим логином и паролем кабинет откроется на любом аккаунте Telegram: команда /login в боте или «Контакты» → «Вход для мастера».'
+        : 'Задайте логин и пароль — с ними кабинет можно открыть на любом аккаунте Telegram через команду /login в боте.'),
+      h('div', { style: 'margin-top:18px' },
+        h('label.field', h('span', 'Логин'), login),
+        hasPassword && h('label.field', h('span', 'Текущий пароль'), current),
+        h('label.field', h('span', hasPassword ? 'Новый пароль' : 'Пароль, от 8 символов'), password),
+      ),
+      h('.sheet-actions', save, logout),
+    ];
+  });
+}
+
 function startBooking(service) {
   state.draft = { service };
   push('datetime');
@@ -870,6 +991,11 @@ async function main() {
   if (state.boot.is_master && !deepLink) {
     state.tab = 'schedule';
     show({ name: 'schedule' }, 'tab');
+  } else if (query.get('screen') === 'login') {
+    // Из команды /login: экран входа поверх «Контактов», чтобы «Назад» вёл туда
+    state.tab = 'about';
+    state.stack = [{ name: 'about' }];
+    show({ name: 'login' }, 'forward');
   } else {
     state.tab = 'home';
     show({ name: 'home' }, 'tab');
