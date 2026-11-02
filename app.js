@@ -130,9 +130,12 @@ function toast(text, kind = 'ok') {
   const el = document.getElementById('toast');
   el.className = kind;
   el.replaceChildren(icon(kind === 'error' ? 'alert' : 'check', 20), h('span', text));
-  requestAnimationFrame(() => el.classList.add('show'));
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
+  // Таймер — только после показа: в свёрнутом приложении кадр приходит позже, и тост остался бы на экране
+  requestAnimationFrame(() => {
+    el.classList.add('show');
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
+  });
 }
 
 async function api(path, { method = 'GET', body } = {}) {
@@ -524,7 +527,9 @@ const SCREENS = {
     const consent = h('input', { type: 'checkbox', checked: !!draft.consent });
     const submit = () => {
       if (!name.value.trim()) return toast('Напишите, как к вам обращаться', 'error');
-      if (phone.value.replace(/\D/g, '').length < 10) return toast('Проверьте номер телефона', 'error');
+      // Как на сервере: от 10 цифр, а номер с кодом 7 — ровно 11
+      const digits = phone.value.replace(/\D/g, '');
+      if (digits.length < 10 || (digits[0] === '7' && digits.length !== 11)) return toast('Проверьте номер телефона', 'error');
       if (!consent.checked) return toast('Отметьте согласие — без него запись не сохранится', 'error');
       Object.assign(draft, { name: name.value.trim(), phone: phone.value.trim(), consent: true });
       push('review');
@@ -598,6 +603,11 @@ const SCREENS = {
   async success({ booking }) {
     document.body.classList.add('flow');
     const colors = ['#ffd8c8', '#f3a3c4', '#cbb9ff', '#a5e9c9'];
+    // Напоминания, чьё время уже прошло, сервер не шлёт — обещаем только те, что придут
+    const hoursLeft = (booking.ts * 1000 - Date.now()) / 3_600_000;
+    const reminders = hoursLeft > 24 ? 'Напомню накануне и за 2 часа — в чате с ботом.'
+      : hoursLeft > 2 ? 'Напомню за 2 часа до визита — в чате с ботом.'
+      : 'Время и адрес — в «Моих записях».';
     return [
       h('.done-mark',
         h('.check', icon('check', 36)),
@@ -606,7 +616,7 @@ const SCREENS = {
         })),
       ),
       h('h1.title.center.rise', { i: 1 }, 'Вы записаны!'),
-      h('p.lead.center.rise', { i: 2, style: 'margin-bottom:22px' }, 'Напомню накануне и за 2 часа — в чате с ботом.'),
+      h('p.lead.center.rise', { i: 2, style: 'margin-bottom:22px' }, reminders),
       h('.ticket-wrap', h('.card.ticket.floating',
         h('.eyebrow', 'До встречи'),
         h('.ticket-name', booking.service_name),
