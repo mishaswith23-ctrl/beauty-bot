@@ -1,16 +1,31 @@
 :root {
   color-scheme: dark;
   --bg: #110e13;
-  --line: rgba(255, 236, 242, .08);
-  --line-strong: rgba(255, 236, 242, .14);
+  --bg-rgb: 17 14 19;
+  --line-rgb: 255 236 242;
+  --line: rgb(var(--line-rgb) / .08);
+  --line-strong: rgb(var(--line-rgb) / .14);
   --plate: rgba(255, 255, 255, .06);
   --text: #f8f1f3;
   --muted: #c2b5bb;
   --faint: #978a90;
   --accent: #ffc4b3;
+  --accent-rgb: 255 196 179;
   --accent-grad: linear-gradient(135deg, #ffd8c8 0%, #ffbab4 48%, #f3a3c4 100%);
+  --accent-deep: #f3a3c4;
   --accent-ink: #2b1420;
   --lilac: #cbb9ff;
+  --lilac-rgb: 203 185 255;
+  --warm-rgb: 255 190 170;
+  --ring: rgba(255, 205, 190, .85);
+  --aura-1: rgba(255, 178, 156, .24);
+  --aura-2: rgba(186, 158, 255, .16);
+  --aura-3: rgba(245, 146, 188, .15);
+  --card: linear-gradient(160deg, rgba(50, 41, 56, .84), rgba(26, 21, 30, .84));
+  --glass: rgba(32, 26, 36, .74);
+  --toast: rgba(44, 36, 49, .92);
+  --sheet: linear-gradient(165deg, #2b2330, #18141b 70%);
+  --sparks: #ffd8c8 #f3a3c4 #cbb9ff #a5e9c9;
   --ok: #a5e9c9;
   --danger: #ffa3a3;
   --radius-lg: 28px;
@@ -22,6 +37,34 @@
   --spring: cubic-bezier(.34, 1.36, .64, 1);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --font: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+/* Баня: тёмное дерево, мёд и жар печи, а второй тон — эвкалипт и берёзовый веник */
+:root[data-kind="sauna"] {
+  --bg: #130f0c;
+  --bg-rgb: 19 15 12;
+  --line-rgb: 255 232 210;
+  --text: #f8f1ea;
+  --muted: #c4b6a8;
+  --faint: #9a8b7e;
+  --accent: #ffc98a;
+  --accent-rgb: 255 201 138;
+  --accent-grad: linear-gradient(135deg, #ffe1a8 0%, #ffb86b 48%, #ff8f5a 100%);
+  --accent-deep: #ff9a5c;
+  --accent-ink: #2a1608;
+  --lilac: #bfdca8;
+  --lilac-rgb: 180 215 150;
+  --warm-rgb: 255 170 100;
+  --ring: rgba(255, 210, 160, .85);
+  --aura-1: rgba(255, 160, 90, .22);
+  --aura-2: rgba(170, 205, 150, .12);
+  --aura-3: rgba(255, 120, 70, .14);
+  --card: linear-gradient(160deg, rgba(52, 40, 32, .84), rgba(27, 21, 17, .84));
+  --glass: rgba(34, 27, 22, .74);
+  --toast: rgba(46, 37, 30, .92);
+  --sheet: linear-gradient(165deg, #2e241d, #19130f 70%);
+  --sparks: #ffe1a8 #ff9a5c #ffc98a #bfdca8;
+  --glow: 0 16px 36px -14px rgba(255, 150, 80, .55), 0 1px 0 rgba(255, 255, 255, .55) inset;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -41,21 +84,23 @@ svg { display: block; flex: none; }
 /* Фон: мягкие пятна света медленно плывут за карточками */
 
 #app { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
-.aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+/* Цвет пятен зависит от вида заведения: пока сервер его не назвал, фон просто тёмный */
+.aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 1.2s ease; }
+:root[data-kind] .aurora { opacity: 1; }
 .aurora i { position: absolute; width: 95vmax; height: 95vmax; border-radius: 50%; will-change: transform; }
 .aurora i:nth-child(1) {
   left: 10%; top: -62vmax;
-  background: radial-gradient(closest-side, rgba(255, 178, 156, .24), transparent);
+  background: radial-gradient(closest-side, var(--aura-1), transparent);
   animation: drift-a 26s ease-in-out infinite alternate;
 }
 .aurora i:nth-child(2) {
   left: -58vmax; top: 18%;
-  background: radial-gradient(closest-side, rgba(186, 158, 255, .16), transparent);
+  background: radial-gradient(closest-side, var(--aura-2), transparent);
   animation: drift-b 33s ease-in-out infinite alternate;
 }
 .aurora i:nth-child(3) {
   right: -62vmax; bottom: -58vmax;
-  background: radial-gradient(closest-side, rgba(245, 146, 188, .15), transparent);
+  background: radial-gradient(closest-side, var(--aura-3), transparent);
   animation: drift-c 29s ease-in-out infinite alternate;
 }
 @keyframes drift-a { to { transform: translate3d(-14vmax, 9vmax, 0) scale(1.12); } }
@@ -124,7 +169,7 @@ body.flow .screen > .inner > .cta { margin-top: auto; }
   text-align: left;
   padding: 18px;
   border-radius: var(--radius-lg);
-  background: linear-gradient(160deg, rgba(50, 41, 56, .84), rgba(26, 21, 30, .84));
+  background: var(--card);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
 }
@@ -159,7 +204,7 @@ button.card:active { --press: .985; }
   width: 260px; height: 260px;
   right: -90px; top: -120px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 190, 170, .26), transparent 68%);
+  background: radial-gradient(circle, rgb(var(--warm-rgb) / .26), transparent 68%);
   pointer-events: none;
 }
 .hero-top { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
@@ -178,7 +223,7 @@ button.card:active { --press: .985; }
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0 35%, rgba(255, 205, 190, .85) 55%, transparent 75%);
+  background: conic-gradient(from 0deg, transparent 0 35%, var(--ring) 55%, transparent 75%);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
   animation: spin 7s linear infinite;
@@ -191,7 +236,7 @@ button.card:active { --press: .985; }
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(120% 90% at 0% 0%, rgba(255, 190, 170, .14), transparent 60%);
+  background: radial-gradient(120% 90% at 0% 0%, rgb(var(--warm-rgb) / .14), transparent 60%);
   pointer-events: none;
 }
 .next-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; color: var(--muted); }
@@ -205,7 +250,7 @@ button.card:active { --press: .985; }
   border-radius: 999px;
   font-size: 13px; font-weight: 700;
   color: var(--accent);
-  background: rgba(255, 196, 179, .12);
+  background: rgb(var(--accent-rgb) / .12);
 }
 .pill.solid { color: var(--accent-ink); background: var(--accent-grad); }
 
@@ -222,6 +267,11 @@ button.card:active { --press: .985; }
 .tint-lotus   { --tint: #d9ccff; --tint-bg: rgba(203, 185, 255, .14); }
 .tint-drop    { --tint: #b5f0db; --tint-bg: rgba(174, 233, 211, .12); }
 .tint-lash    { --tint: #f9bed4; --tint-bg: rgba(245, 169, 196, .14); }
+.tint-steam   { --tint: #f3e3cf; --tint-bg: rgba(243, 227, 207, .1); }
+.tint-flame   { --tint: #ffb27a; --tint-bg: rgba(255, 160, 100, .15); }
+.tint-leaf    { --tint: #bfe0a6; --tint-bg: rgba(180, 220, 150, .12); }
+.tint-snow    { --tint: #bfe3ff; --tint-bg: rgba(170, 215, 255, .12); }
+.tint-cup     { --tint: #ffd99a; --tint-bg: rgba(255, 215, 150, .13); }
 .tint-sparkle { --tint: #ffe0ab; --tint-bg: rgba(255, 220, 166, .13); }
 .service-name { font-weight: 700; font-size: 17px; line-height: 1.25; letter-spacing: -.01em; }
 .service-meta { color: var(--muted); font-size: 14px; margin-top: 3px; }
@@ -274,7 +324,7 @@ button.card:active { --press: .985; }
   border-radius: 22px;
   text-align: center;
   scroll-snap-align: center;
-  background: linear-gradient(160deg, rgba(50, 41, 56, .84), rgba(26, 21, 30, .84));
+  background: var(--card);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   transition: transform .5s var(--spring), background .3s, color .3s, box-shadow .5s;
@@ -339,7 +389,7 @@ button.card:active { --press: .985; }
   border-radius: 50%;
   display: grid; place-items: center;
   color: var(--lilac);
-  background: rgba(203, 185, 255, .12);
+  background: rgb(var(--lilac-rgb) / .12);
 }
 .empty-title { color: var(--text); font-weight: 700; font-size: 17px; margin-bottom: 4px; }
 
@@ -366,7 +416,7 @@ button.card:active { --press: .985; }
   bottom: calc(-24px - var(--safe-bottom));
   margin: 0 -16px calc(-24px - var(--safe-bottom));
   padding: 44px 16px calc(16px + var(--safe-bottom));
-  background: linear-gradient(transparent, rgba(17, 14, 19, .92) 40%);
+  background: linear-gradient(transparent, rgb(var(--bg-rgb) / .92) 40%);
   z-index: 2;
 }
 .cta .hint { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 10px; min-height: 20px; }
@@ -385,9 +435,9 @@ button.card:active { --press: .985; }
   outline: none;
   transition: border-color .25s, box-shadow .25s;
 }
-.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255, 196, 179, .14); }
+.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgb(var(--accent-rgb) / .14); }
 .consent { display: flex; gap: 12px; align-items: flex-start; margin-top: 18px; font-size: 14px; color: var(--muted); cursor: pointer; }
-.consent input { width: 22px; height: 22px; margin: 0; accent-color: #f3a3c4; flex: none; }
+.consent input { width: 22px; height: 22px; margin: 0; accent-color: var(--accent-deep); flex: none; }
 
 /* Билет записи */
 
@@ -398,7 +448,7 @@ button.card:active { --press: .985; }
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(110% 80% at 100% 0%, rgba(255, 190, 170, .16), transparent 60%);
+  background: radial-gradient(110% 80% at 100% 0%, rgb(var(--warm-rgb) / .16), transparent 60%);
   pointer-events: none;
 }
 .ticket.floating { animation: ticket-in 1s var(--ease) backwards, float 8s ease-in-out 1s infinite; }
@@ -413,7 +463,7 @@ button.card:active { --press: .985; }
 .ticket-foot {
   display: flex; justify-content: space-between; align-items: baseline;
   margin-top: 12px; padding-top: 14px;
-  border-top: 1.5px dashed rgba(255, 236, 242, .16);
+  border-top: 1.5px dashed rgb(var(--line-rgb) / .16);
   font-weight: 700;
 }
 .ticket-foot .price { font-size: 22px; }
@@ -465,7 +515,7 @@ button.card:active { --press: .985; }
 .bar-track i {
   width: 100%;
   border-radius: 6px;
-  background: rgba(203, 185, 255, .26);
+  background: rgb(var(--lilac-rgb) / .26);
   transform-origin: bottom;
   animation: grow .8s var(--spring) backwards;
   animation-delay: calc(var(--i, 0) * 50ms + 200ms);
@@ -480,7 +530,7 @@ button.card:active { --press: .985; }
   right: -40px; bottom: -50px;
   width: 140px; height: 140px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(203, 185, 255, .2), transparent 70%);
+  background: radial-gradient(circle, rgb(var(--lilac-rgb) / .2), transparent 70%);
 }
 .day-title { display: flex; justify-content: space-between; align-items: baseline; margin: 0 4px 2px; }
 .timeline-time { font-weight: 800; font-size: 18px; }
@@ -511,7 +561,7 @@ button.card:active { --press: .985; }
   width: min(calc(100% - 24px), 480px);
   padding: 6px;
   border-radius: 28px;
-  background: rgba(32, 26, 36, .74);
+  background: var(--glass);
   -webkit-backdrop-filter: blur(24px) saturate(1.5);
   backdrop-filter: blur(24px) saturate(1.5);
   border: 1px solid var(--line);
@@ -525,7 +575,7 @@ body.flow #tabs { transform: translate(-50%, 130%); opacity: 0; pointer-events: 
   left: 6px; top: 6px; bottom: 6px;
   width: calc((100% - 12px) / var(--count, 3));
   border-radius: 22px;
-  background: rgba(255, 196, 179, .13);
+  background: rgb(var(--accent-rgb) / .13);
   transform: translateX(calc(var(--index, 0) * 100%));
   transition: transform .55s var(--spring), opacity .3s;
 }
@@ -557,7 +607,7 @@ body.flow #tabs { transform: translate(-50%, 130%); opacity: 0; pointer-events: 
   overflow-y: auto;
   padding: 12px 18px calc(18px + var(--safe-bottom));
   border-radius: 32px 32px 0 0;
-  background: linear-gradient(165deg, #2b2330, #18141b 70%);
+  background: var(--sheet);
   border: 1px solid var(--line);
   border-bottom: 0;
   box-shadow: 0 -30px 60px -20px rgba(0, 0, 0, .9);
@@ -590,7 +640,7 @@ body.flow #tabs { transform: translate(-50%, 130%); opacity: 0; pointer-events: 
   display: flex; align-items: flex-start; gap: 10px;
   padding: 13px 16px;
   border-radius: 20px;
-  background: rgba(44, 36, 49, .92);
+  background: var(--toast);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border: 1px solid var(--line-strong);

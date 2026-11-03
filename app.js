@@ -18,6 +18,81 @@ const state = {
   masterDate: null,
 };
 
+// Слова, которые у мастера и у бани разные. Вид заведения называет сервер (boot.kind).
+const WORDS = {
+  beauty: {
+    tabBook: 'Запись',
+    tabMine: 'Мои записи',
+    eyebrow: 'Онлайн-запись',
+    pick: 'Выберите услугу',
+    noServices: ['Услуги скоро появятся', 'Мастер ещё заполняет список.'],
+    noSlots: 'Загляните позже или свяжитесь с мастером.',
+    askOnce: 'Спрошу один раз. Телефон увидит только мастер.',
+    consent: 'Согласен(на) на обработку имени и телефона для записи к мастеру',
+    consentNeeded: 'Отметьте согласие — без него запись не сохранится',
+    review: 'Проверьте запись',
+    yours: 'Ваша запись',
+    confirm: 'Подтвердить запись',
+    remindBoth: 'Напомню накануне и за 2 часа — в чате с ботом.',
+    remind2: 'Напомню за 2 часа до визита — в чате с ботом.',
+    remindNone: 'Время и адрес — в «Моих записях».',
+    done: 'Вы записаны!',
+    mineEmpty: 'Выберите услугу — это займёт минуту.',
+    book: 'Записаться',
+    cancelTitle: 'Отменить запись?',
+    cancelText: 'Время освободится, а мастер получит уведомление.',
+    cancelled: 'Запись отменена',
+    about: 'Мастер',
+    staffLogin: 'Вход для мастера',
+    loginHint: 'Кабинет откроется на этом аккаунте Telegram, сюда же будут приходить новые записи.',
+    cabinet: 'Кабинет мастера',
+    count: ['запись', 'записи', 'записей'],
+    dayOff: 'Отдыхайте — записей в этот день нет.',
+    dayFree: 'Записей пока нет.',
+    staffCancelText: 'Клиент получит уведомление с предложением выбрать другое время.',
+    staffCancelled: 'Запись отменена, клиент предупреждён',
+    reopened: 'Время снова открыто для записи',
+    blockHint: 'Клиенты не смогут записаться на этот промежуток.',
+    logoutText: 'Кабинет и уведомления о записях пропадут с этого аккаунта. Вернуться можно по логину и паролю: команда /login в боте.',
+  },
+  sauna: {
+    tabBook: 'Бронь',
+    tabMine: 'Мои брони',
+    eyebrow: 'Онлайн-бронирование',
+    pick: 'Что бронируем?',
+    noServices: ['Скоро здесь появится выбор', 'Список ещё заполняется.'],
+    noSlots: 'Загляните позже или позвоните нам.',
+    askOnce: 'Спросим один раз. Телефон увидит только администратор.',
+    consent: 'Согласен(на) на обработку имени и телефона для бронирования',
+    consentNeeded: 'Отметьте согласие — без него бронь не сохранится',
+    review: 'Проверьте бронь',
+    yours: 'Ваша бронь',
+    confirm: 'Забронировать',
+    remindBoth: 'Напомним накануне и за 2 часа — в чате с ботом.',
+    remind2: 'Напомним за 2 часа до визита — в чате с ботом.',
+    remindNone: 'Время и адрес — в «Моих бронях».',
+    done: 'Забронировано!',
+    mineEmpty: 'Выберите время — это займёт минуту.',
+    book: 'Забронировать',
+    cancelTitle: 'Отменить бронь?',
+    cancelText: 'Время освободится, а администратор получит уведомление.',
+    cancelled: 'Бронь отменена',
+    about: 'О нас',
+    staffLogin: 'Вход для администратора',
+    loginHint: 'Кабинет откроется на этом аккаунте Telegram, сюда же будут приходить новые брони.',
+    cabinet: 'Кабинет администратора',
+    count: ['бронь', 'брони', 'броней'],
+    dayOff: 'В этот день мы закрыты.',
+    dayFree: 'Броней пока нет.',
+    staffCancelText: 'Гость получит уведомление с предложением выбрать другое время.',
+    staffCancelled: 'Бронь отменена, гость предупреждён',
+    reopened: 'Время снова открыто для брони',
+    blockHint: 'Гости не смогут забронировать этот промежуток.',
+    logoutText: 'Кабинет и уведомления о бронях пропадут с этого аккаунта. Вернуться можно по логину и паролю: команда /login в боте.',
+  },
+};
+let words = WORDS.beauty;
+
 // Telegram
 
 const sdk = () => window.Telegram && window.Telegram.WebApp;
@@ -95,11 +170,16 @@ const ICONS = {
   drop: '<path d="M12 3.2s6 6.3 6 10.6a6 6 0 0 1-12 0C6 9.5 12 3.2 12 3.2z"/><path d="M9.2 14.6a2.9 2.9 0 0 0 2.6 2.7"/>',
   lash: '<path d="M2.5 12.5s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5z"/><circle cx="12" cy="12.5" r="2.6"/><path d="M12 4.5v2M6.8 5.8l1 1.7M17.2 5.8l-1 1.7"/>',
   sparkle: '<path d="M12 3l1.9 5.6 5.6 1.9-5.6 1.9L12 18l-1.9-5.6-5.6-1.9 5.6-1.9z"/><path d="M19 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
+  steam: '<path d="M7.5 19c-1.6-1.8 1.6-3.7 0-5.5s1.6-3.7 0-5.5"/><path d="M12 20.5c-1.6-1.8 1.6-3.7 0-5.5s1.6-3.7 0-5.5 1.6-3.7 0-5.5"/><path d="M16.5 19c-1.6-1.8 1.6-3.7 0-5.5s1.6-3.7 0-5.5"/>',
+  flame: '<path d="M12 21c-3.6 0-6-2.5-6-5.8 0-3.2 2.2-5.1 3.4-7.4.5 1.6 1.4 2.6 2.4 3.1-.3-3 1-6 3.2-7.9.4 2.9 1.4 4.4 2.6 6.1A7.6 7.6 0 0 1 18 15.2C18 18.5 15.6 21 12 21z"/><path d="M12 21c-1.5 0-2.6-1.1-2.6-2.6 0-1.7 1.3-2.6 2.1-3.9.9 1.3 3.1 2.2 3.1 3.9 0 1.5-1.1 2.6-2.6 2.6z"/>',
+  leaf: '<path d="M5 19c0-8 5-13.5 14-14 0 9-5.5 14-14 14z"/><path d="M5 19c3-3.5 6-6.5 9.5-9"/>',
+  snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/><path d="M9.5 4.5L12 7l2.5-2.5M9.5 19.5L12 17l2.5 2.5"/>',
+  cup: '<path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 10.5h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8.5 3.5c-.8 1 .8 1.6 0 2.6M12 3.5c-.8 1 .8 1.6 0 2.6"/>',
   sunrise: '<path d="M3.5 18.5h17M7 18.5a5 5 0 0 1 10 0"/><path d="M12 6v3M5.6 9.6l1.8 1.8M18.4 9.6l-1.8 1.8"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>',
   moon: '<path d="M19.5 14.6A7.5 7.5 0 0 1 9.4 4.5a7.5 7.5 0 1 0 10.1 10.1z"/>',
 };
-const SERVICE_ICONS = ['polish', 'lotus', 'drop', 'lash', 'sparkle'];
+const SERVICE_ICONS = ['polish', 'lotus', 'drop', 'lash', 'sparkle', 'steam', 'flame', 'leaf', 'snow', 'cup'];
 
 function icon(name, size = 22) {
   const span = document.createElement('span');
@@ -118,6 +198,20 @@ function plural(n, one, few, many) {
   if (units >= 2 && units <= 4) return few;
   return many;
 }
+
+// «45 мин», «1 час», «2 часа», «1 ч 30 мин»
+function duration(minutes) {
+  if (minutes < 60) return `${minutes} мин`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} ч ${rest} мин` : `${hours} ${plural(hours, 'час', 'часа', 'часов')}`;
+}
+
+// Длительность, если её нет в названии: «Баня на 2 часа» и так говорит, сколько это
+const durationNote = service => {
+  const text = duration(service.duration_min);
+  return service.name.includes(text) ? null : text;
+};
 
 function countdown(daysLeft) {
   if (daysLeft <= 0) return 'Сегодня';
@@ -307,8 +401,8 @@ const tabGlow = h('.tab-glow');
 
 function renderTabs() {
   const items = [
-    ['home', 'Запись', 'spark'],
-    ['mine', 'Мои записи', 'list'],
+    ['home', words.tabBook, 'spark'],
+    ['mine', words.tabMine, 'list'],
     ['about', 'Контакты', 'pin'],
   ];
   if (state.boot.is_master) items.unshift(['schedule', 'Кабинет', 'chart']);
@@ -392,11 +486,11 @@ function dayStrip(days, selected, onPick, extra) {
 
 const PARTS = [['morning', 'Утро', 'sunrise'], ['day', 'День', 'sun'], ['evening', 'Вечер', 'moon']];
 
+// Только части дня, где есть время: пустые не попадают в replaceChildren, иначе там напишется «null»
 function slotGroups(slots, selectedTs, onPick) {
   let index = 0;
-  return PARTS.map(([part, label, glyph]) => {
+  return PARTS.filter(([part]) => slots.some(slot => slot.part === part)).map(([part, label, glyph]) => {
     const group = slots.filter(slot => slot.part === part);
-    if (!group.length) return null;
     return h('.part',
       h('.part-head', icon(glyph, 18), label),
       h('.slots', group.map(slot => {
@@ -421,7 +515,7 @@ const SCREENS = {
       tilt(h('.card.hero.resting.rise', { i: 0 },
         h('.hero-top',
           h('.avatar', master.name.slice(0, 1)),
-          h('div', h('.eyebrow', 'Онлайн-запись'), h('h1.title', master.name)),
+          h('div', h('.eyebrow', words.eyebrow), h('h1.title', master.name)),
         ),
         h('p.lead', master.about),
       )),
@@ -430,7 +524,7 @@ const SCREENS = {
         h('.next-title', next.service_name),
         h('.next-when', icon('calendar', 18), next.when),
       ))),
-      h('h2.section.rise', { i: 2 }, 'Выберите услугу'),
+      h('h2.section.rise', { i: 2 }, words.pick),
       boot.services.length
         ? h('.stack', boot.services.map((service, index) => tilt(h('button.card.service.rise', {
             i: index + 3,
@@ -439,14 +533,14 @@ const SCREENS = {
             h(`.plate.tint-${serviceIcon(service.icon)}`, icon(serviceIcon(service.icon), 24)),
             h('div',
               h('.service-name', service.name),
-              h('.service-meta', `${service.duration_min} мин`),
+              durationNote(service) && h('.service-meta', durationNote(service)),
             ),
             h('.price', rub(service.price)),
             service.next_slot
               ? h('span.chip', icon('clock', 15), 'Ближайшее: ', h('b', service.next_slot))
               : h('span.chip', 'Свободных окон пока нет'),
           ))))
-        : emptyState('spark', 'Услуги скоро появятся', 'Мастер ещё заполняет список.'),
+        : emptyState('spark', ...words.noServices),
     ];
   },
 
@@ -460,7 +554,7 @@ const SCREENS = {
       return [
         topbar(service.name),
         stepper('datetime'),
-        emptyState('calendar', 'Свободных окон нет', 'Загляните позже или свяжитесь с мастером.'),
+        emptyState('calendar', 'Свободных окон нет', words.noSlots),
       ];
     }
 
@@ -511,7 +605,7 @@ const SCREENS = {
     return [
       topbar(service.name),
       stepper('datetime'),
-      h('p.muted.rise', { i: 1 }, `${service.duration_min} мин · ${rub(service.price)}`),
+      h('p.muted.rise', { i: 1 }, [durationNote(service), rub(service.price)].filter(Boolean).join(' · ')),
       dayStrip(data.days, data.selected, loadDay, day => ({ disabled: day.slots === 0, dot: day.slots > 0 })),
       h('.rise', { i: 2 }, slotBox),
       h('.cta', h('.inner', hint, continueBtn)),
@@ -530,18 +624,18 @@ const SCREENS = {
       // Как на сервере: от 10 цифр, а номер с кодом 7 — ровно 11
       const digits = phone.value.replace(/\D/g, '');
       if (digits.length < 10 || (digits[0] === '7' && digits.length !== 11)) return toast('Проверьте номер телефона', 'error');
-      if (!consent.checked) return toast('Отметьте согласие — без него запись не сохранится', 'error');
+      if (!consent.checked) return toast(words.consentNeeded, 'error');
       Object.assign(draft, { name: name.value.trim(), phone: phone.value.trim(), consent: true });
       push('review');
     };
     return [
       topbar('Ваши контакты'),
       stepper('contact'),
-      h('p.muted.rise', { i: 1, style: 'margin-bottom:16px' }, 'Спрошу один раз. Телефон увидит только мастер.'),
+      h('p.muted.rise', { i: 1, style: 'margin-bottom:16px' }, words.askOnce),
       h('.card.rise', { i: 2 },
         h('label.field', h('span', 'Имя'), name),
         h('label.field', h('span', 'Телефон'), phone),
-        h('label.consent', consent, h('span', 'Согласен(на) на обработку имени и телефона для записи к мастеру')),
+        h('label.consent', consent, h('span', words.consent)),
       ),
       h('.cta', h('.inner', h('button.btn', { onclick: submit }, 'Продолжить'))),
     ];
@@ -583,15 +677,15 @@ const SCREENS = {
         state.tab = 'home';
         show({ name: 'success', params: { booking } }, 'forward');
       },
-    }, 'Подтвердить запись');
+    }, words.confirm);
     return [
-      topbar('Проверьте запись'),
+      topbar(words.review),
       stepper('review'),
       h('.ticket-wrap', h('.card.ticket.floating',
-        h('.eyebrow', 'Ваша запись'),
+        h('.eyebrow', words.yours),
         h('.ticket-name', service.name),
         h('.row', icon('calendar'), h('span', `${dayLabel}, ${time}`)),
-        h('.row', icon('clock'), h('span', `${service.duration_min} мин`)),
+        durationNote(service) && h('.row', icon('clock'), h('span', durationNote(service))),
         h('.row', icon('pin'), h('span', state.boot.master.address)),
         h('.row', icon('user'), h('span', `${client.name}, ${client.phone}`)),
         h('.ticket-foot', h('span', 'Стоимость'), h('span.price', rub(service.price))),
@@ -602,12 +696,11 @@ const SCREENS = {
 
   async success({ booking }) {
     document.body.classList.add('flow');
-    const colors = ['#ffd8c8', '#f3a3c4', '#cbb9ff', '#a5e9c9'];
+    // Цвета искр — из темы в style.css
+    const colors = getComputedStyle(document.documentElement).getPropertyValue('--sparks').trim().split(/\s+/);
     // Напоминания, чьё время уже прошло, сервер не шлёт — обещаем только те, что придут
     const hoursLeft = (booking.ts * 1000 - Date.now()) / 3_600_000;
-    const reminders = hoursLeft > 24 ? 'Напомню накануне и за 2 часа — в чате с ботом.'
-      : hoursLeft > 2 ? 'Напомню за 2 часа до визита — в чате с ботом.'
-      : 'Время и адрес — в «Моих записях».';
+    const reminders = hoursLeft > 24 ? words.remindBoth : hoursLeft > 2 ? words.remind2 : words.remindNone;
     return [
       h('.done-mark',
         h('.check', icon('check', 36)),
@@ -615,7 +708,7 @@ const SCREENS = {
           vars: { '--a': `${i * (360 / 14)}deg`, '--d': `${58 + (i % 3) * 16}px`, '--delay': `${280 + (i % 4) * 40}ms`, '--spark': colors[i % colors.length] },
         })),
       ),
-      h('h1.title.center.rise', { i: 1 }, 'Вы записаны!'),
+      h('h1.title.center.rise', { i: 1 }, words.done),
       h('p.lead.center.rise', { i: 2, style: 'margin-bottom:22px' }, reminders),
       h('.ticket-wrap', h('.card.ticket.floating',
         h('.eyebrow', 'До встречи'),
@@ -625,7 +718,7 @@ const SCREENS = {
         h('.ticket-foot', h('span', 'Стоимость'), h('span.price', rub(booking.price))),
       )),
       h('.rise', { i: 4, style: 'margin-top:24px' },
-        h('button.btn', { onclick: () => resetTo('mine') }, 'Мои записи'),
+        h('button.btn', { onclick: () => resetTo('mine') }, words.tabMine),
         nativeBack() && h('button.btn.link', { style: 'margin:8px auto 0;display:flex', onclick: () => sdk().close() }, 'Закрыть'),
       ),
     ];
@@ -635,10 +728,10 @@ const SCREENS = {
 
   async mine() {
     const bookings = await api('bookings');
-    const title = h('h1.title.rise', { i: 0, style: 'margin-bottom:16px' }, 'Мои записи');
+    const title = h('h1.title.rise', { i: 0, style: 'margin-bottom:16px' }, words.tabMine);
     if (!bookings.length) {
-      return [title, emptyState('calendar', 'Пока пусто', 'Выберите услугу — это займёт минуту.',
-        h('button.btn', { style: 'margin-top:18px', onclick: () => resetTo('home') }, 'Записаться'))];
+      return [title, emptyState('calendar', 'Пока пусто', words.mineEmpty,
+        h('button.btn', { style: 'margin-top:18px', onclick: () => resetTo('home') }, words.book))];
     }
     return [
       title,
@@ -650,15 +743,15 @@ const SCREENS = {
         h('.booking-actions', h('button.btn.link.bad', {
           onclick: async () => {
             const yes = await confirmSheet({
-              title: 'Отменить запись?',
-              text: `${booking.when} — ${booking.service_name}. Время освободится, а мастер получит уведомление.`,
+              title: words.cancelTitle,
+              text: `${booking.when} — ${booking.service_name}. ${words.cancelText}`,
               confirm: 'Да, отменить',
               danger: true,
             });
             if (!yes) return;
             try {
               await api(`bookings/${booking.id}/cancel`, { method: 'POST' });
-              toast('Запись отменена');
+              toast(words.cancelled);
             } catch (error) {
               toast(error.message, 'error');
             }
@@ -677,7 +770,7 @@ const SCREENS = {
       tilt(h('.card.hero.resting.rise', { i: 0 },
         h('.hero-top',
           h('.avatar', master.name.slice(0, 1)),
-          h('div', h('.eyebrow', 'Мастер'), h('h1.title', master.name)),
+          h('div', h('.eyebrow', words.about), h('h1.title', master.name)),
         ),
         h('p.lead', master.about),
       )),
@@ -695,7 +788,7 @@ const SCREENS = {
         ),
       ),
       !state.boot.is_master && h('.rise', { i: 3, style: 'margin-top:10px' },
-        h('button.btn.link', { style: 'margin:0 auto;display:flex', onclick: () => push('login') }, icon('lock', 18), 'Вход для мастера')),
+        h('button.btn.link', { style: 'margin:0 auto;display:flex', onclick: () => push('login') }, icon('lock', 18), words.staffLogin)),
     ];
   },
 
@@ -725,9 +818,9 @@ const SCREENS = {
       },
     }, 'Войти');
     return [
-      topbar('Вход для мастера'),
+      topbar(words.staffLogin),
       h('p.muted.rise', { i: 1, style: 'margin-bottom:16px' },
-        'Кабинет откроется на этом аккаунте Telegram, сюда же будут приходить новые записи.'),
+        words.loginHint),
       h('.card.rise', { i: 2 },
         h('label.field', h('span', 'Логин'), login),
         h('label.field', h('span', 'Пароль'), password),
@@ -766,11 +859,11 @@ const SCREENS = {
     const week = data.days.slice(0, 7);
     const peak = Math.max(1, ...week.map(day => day.count));
     return [
-      h('.rise', { i: 0, style: 'margin-bottom:16px' }, h('.eyebrow', 'Кабинет мастера'), h('h1.title', 'Расписание')),
+      h('.rise', { i: 0, style: 'margin-bottom:16px' }, h('.eyebrow', words.cabinet), h('h1.title', 'Расписание')),
       h('.stats',
         tilt(h('.card.resting.rise', { i: 0 },
           h('.stat-value', String(data.week.count)),
-          h('.stat-label', `${plural(data.week.count, 'запись', 'записи', 'записей')} за 7 дней`),
+          h('.stat-label', `${plural(data.week.count, ...words.count)} за 7 дней`),
           h('.bars', week.map((day, i) => h(`.bar${day.today ? '.today' : ''}`,
             h('.bar-track', h('i', { i, style: `height:${day.count ? Math.max(14, (day.count / peak) * 100) : 8}%` })),
             h('span', day.weekday.slice(0, 1)),
@@ -794,12 +887,12 @@ const SCREENS = {
 
 function renderDay(day) {
   const parts = [];
-  const summary = day.count ? `${day.count} ${plural(day.count, 'запись', 'записи', 'записей')} · ${rub(day.sum)}` : '';
+  const summary = day.count ? `${day.count} ${plural(day.count, ...words.count)} · ${rub(day.sum)}` : '';
   parts.push(h('.day-title', h('strong', day.label), h('span.muted.small', summary)));
   if (!day.bookings.length && !day.blocks.length) {
     parts.push(day.off
-      ? emptyState('moon', 'Выходной', 'Отдыхайте — записей в этот день нет.')
-      : emptyState('sun', 'Свободный день', 'Записей пока нет.'));
+      ? emptyState('moon', 'Выходной', words.dayOff)
+      : emptyState('sun', 'Свободный день', words.dayFree));
   }
   day.bookings.forEach((booking, index) => {
     parts.push(tilt(h('.card.pop', { i: index },
@@ -815,15 +908,15 @@ function renderDay(day) {
       !booking.past && h('.booking-actions', h('button.btn.link.bad', {
         onclick: async () => {
           const yes = await confirmSheet({
-            title: 'Отменить запись?',
-            text: `${booking.start}, ${booking.client_name}. Клиент получит уведомление с предложением выбрать другое время.`,
+            title: words.cancelTitle,
+            text: `${booking.start}, ${booking.client_name}. ${words.staffCancelText}`,
             confirm: 'Да, отменить',
             danger: true,
           });
           if (!yes) return;
           try {
             await api(`master/bookings/${booking.id}/cancel`, { method: 'POST' });
-            toast('Запись отменена, клиент предупреждён');
+            toast(words.staffCancelled);
           } catch (error) {
             toast(error.message, 'error');
           }
@@ -840,7 +933,7 @@ function renderDay(day) {
         onclick: async () => {
           try {
             await api(`master/blocks/${block.id}`, { method: 'DELETE' });
-            toast('Время снова открыто для записи');
+            toast(words.reopened);
           } catch (error) {
             toast(error.message, 'error');
           }
@@ -874,7 +967,7 @@ function blockSheet(date) {
     const whole = h('button.btn.ghost', { onclick: () => submit(close, {}, whole) }, 'Закрыть весь день');
     return [
       h('h2', 'Закрыть время'),
-      h('p', 'Клиенты не смогут записаться на этот промежуток.'),
+      h('p', words.blockHint),
       h('.two', { style: 'margin-top:18px' }, h('label.field', h('span', 'С'), start), h('label.field', h('span', 'До'), end)),
       h('.sheet-actions', part, whole),
     ];
@@ -921,7 +1014,7 @@ async function accessSheet() {
         close();
         const yes = await confirmSheet({
           title: 'Выйти из кабинета?',
-          text: 'Кабинет и уведомления о записях пропадут с этого аккаунта. Вернуться можно по логину и паролю: команда /login в боте.',
+          text: words.logoutText,
           confirm: 'Выйти',
           danger: true,
         });
@@ -939,7 +1032,7 @@ async function accessSheet() {
     return [
       h('h2', 'Вход в кабинет'),
       h('p', hasPassword
-        ? 'С этим логином и паролем кабинет откроется на любом аккаунте Telegram: команда /login в боте или «Контакты» → «Вход для мастера».'
+        ? `С этим логином и паролем кабинет откроется на любом аккаунте Telegram: команда /login в боте или «Контакты» → «${words.staffLogin}».`
         : 'Задайте логин и пароль — с ними кабинет можно открыть на любом аккаунте Telegram через команду /login в боте.'),
       h('div', { style: 'margin-top:18px' },
         h('label.field', h('span', 'Логин'), login),
@@ -949,6 +1042,22 @@ async function accessSheet() {
       h('.sheet-actions', save, logout),
     ];
   });
+}
+
+// Слова и цвета под вид заведения; шапку Telegram красим в цвет фона темы
+function applyKind(kind) {
+  const known = Object.hasOwn(WORDS, kind) ? kind : 'beauty';
+  words = WORDS[known];
+  document.documentElement.dataset.kind = known;
+  const tg = nativeBack() ? sdk() : null;
+  if (!tg) return;
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  try {
+    tg.setHeaderColor(bg);
+    tg.setBackgroundColor(bg);
+  } catch {
+    // старые версии Telegram не умеют красить шапку — это не мешает работе
+  }
 }
 
 function startBooking(service) {
@@ -986,6 +1095,7 @@ async function main() {
     return;
   }
 
+  applyKind(state.boot.kind);
   document.title = state.boot.master.name;
   const deepLink = state.boot.services.find(service => service.id === query.get('service'));
   if (state.boot.is_master && !deepLink) {
